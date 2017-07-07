@@ -1,6 +1,8 @@
 package cn.edu.hit.run;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.baidu.location.BDLocation;
@@ -29,6 +31,8 @@ import com.baidu.trace.api.track.HistoryTrackResponse;
 import com.baidu.trace.api.track.OnTrackListener;
 import com.baidu.trace.api.track.TrackPoint;
 import com.baidu.trace.model.OnTraceListener;
+import com.baidu.trace.model.ProcessOption;
+import com.baidu.trace.model.TransportMode;
 
 import android.graphics.Color;
 import android.os.Bundle;
@@ -54,7 +58,13 @@ public class FindFragment extends Fragment {
 	protected double locLongititude;
   
     public BDLocationListener myListener = new BDLocationListener() {  
-        @Override  
+        @Override
+		public void onConnectHotSpotMessage(String arg0, int arg1) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override  
         public void onReceiveLocation(BDLocation location) {  
             // map view 销毁后不在处理新接收的位置  
             if (location == null || mapView == null)  
@@ -65,27 +75,30 @@ public class FindFragment extends Fragment {
                     // 此处设置开发者获取到的方向信息，顺时针0-360  
                     .direction(100).latitude(location.getLatitude())  
                     .longitude(location.getLongitude()).build();  
-             baiduMap.setMyLocationData(locData);    //设置定位数据  
+             //baiduMap.setMyLocationData(locData);    //设置定位数据  
               
               locLatitude = location.getLatitude();
               locLongititude= location.getLongitude();
             
                 LatLng ll = new LatLng(location.getLatitude(),  
                         location.getLongitude());  
-                MapStatusUpdate u = MapStatusUpdateFactory.newLatLngZoom(ll, 19);   //设置地图中心点以及缩放级别  
+                MapStatusUpdate u = MapStatusUpdateFactory.newLatLngZoom(ll, 17);   //设置地图中心点以及缩放级别  
                 baiduMap.animateMapStatus(u);  
          
-        }
-
-		@Override
-		public void onConnectHotSpotMessage(String arg0, int arg1) {
-			// TODO Auto-generated method stub
-			
-		}  
-    };  
-   
+        }  
+    };
+	private LBSTraceClient mTraceClient;
+	private Trace mTrace;
+	private OnTraceListener mTraceListener;  
 	
 	  
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		startTrace();
+		
+	}
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
@@ -105,11 +118,56 @@ public class FindFragment extends Fragment {
   
         // baiduMap.setMapType(BaiduMap.MAP_TYPE_SATELLITE); //设置为卫星地图  
         // baiduMap.setTrafficEnabled(true); //开启交通图  
-		startTrace();
+		
 		return view;
 	}
 
-	// 开启轨迹服务
+	// 三个状态实现地图生命周期管理  
+    @Override
+	public void onDestroy() {  
+        //退出时销毁定位  
+        locationClient.stop();  
+        baiduMap.setMyLocationEnabled(false);  
+        // TODO Auto-generated method stub  
+        super.onDestroy();  
+        mapView.onDestroy();  
+        mapView = null;  
+     // 停止服务
+        mTraceClient.stopTrace(mTrace, mTraceListener);
+        // 停止采集
+        mTraceClient.stopGather(mTraceListener);
+    }
+	
+	  @Override
+	public void onPause() {  
+        // TODO Auto-generated method stub  
+        super.onPause();  
+        mapView.onPause();  
+    }  
+    
+ @Override
+	public void onResume() {  
+        // TODO Auto-generated method stub  
+        super.onResume();  
+        mapView.onResume();  
+    }  
+  
+    /** 
+     * 设置定位参数 
+     */  
+    private void setLocationOption() {  
+        LocationClientOption option = new LocationClientOption();  
+        option.setOpenGps(true); // 打开GPS  
+        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);// 设置定位模式  
+        option.setCoorType("bd09ll"); // 返回的定位结果是百度经纬度,默认值gcj02  
+        option.setScanSpan(20); // 设置发起定位请求的间隔时间为5000ms  
+        option.setIsNeedAddress(true); // 返回的定位结果包含地址信息  
+        option.setNeedDeviceDirect(true); // 返回的定位结果包含手机机头的方向  
+          
+        locationClient.setLocOption(option);  
+    }  
+  
+    // 开启轨迹服务
 	private void startTrace() {
 		// 轨迹服务ID
 		long serviceId = 145000;
@@ -120,36 +178,22 @@ public class FindFragment extends Fragment {
 		// true，且需导入bos-android-sdk-1.0.2.jar。
 		boolean isNeedObjectStorage = false;
 		// 初始化轨迹服务
-		Trace mTrace = new Trace(serviceId, entityName, isNeedObjectStorage);
+		mTrace = new Trace(serviceId, entityName, isNeedObjectStorage);
 		// 初始化轨迹服务客户端
-		LBSTraceClient mTraceClient = new LBSTraceClient(this.getActivity()
+		 mTraceClient = new LBSTraceClient(this.getActivity()
 				.getApplicationContext());
 		// 定位周期(单位:秒)
-		int gatherInterval = 10;
+		int gatherInterval = 2;
 		// 打包回传周期(单位:秒)
-		int packInterval = 20;
+		int packInterval = 60;
 		// 设置定位和打包周期
 		mTraceClient.setInterval(gatherInterval, packInterval);
 		// 初始化轨迹服务监听器
-		OnTraceListener mTraceListener = new OnTraceListener() {
-			// 开启服务回调
+		mTraceListener = new OnTraceListener() {
 			@Override
-			public void onStartTraceCallback(int status, String message) {
-			}
+			public void onBindServiceCallback(int arg0, String arg1) {
+				// TODO Auto-generated method stub
 
-			// 停止服务回调
-			@Override
-			public void onStopTraceCallback(int status, String message) {
-			}
-
-			// 开启采集回调
-			@Override
-			public void onStartGatherCallback(int status, String message) {
-			}
-
-			// 停止采集回调
-			@Override
-			public void onStopGatherCallback(int status, String message) {
 			}
 
 			// 推送回调
@@ -157,10 +201,24 @@ public class FindFragment extends Fragment {
 			public void onPushCallback(byte messageNo, PushMessage message) {
 			}
 
+			// 开启采集回调
 			@Override
-			public void onBindServiceCallback(int arg0, String arg1) {
-				// TODO Auto-generated method stub
+			public void onStartGatherCallback(int status, String message) {
+			}
 
+			// 开启服务回调
+			@Override
+			public void onStartTraceCallback(int status, String message) {
+			}
+
+			// 停止采集回调
+			@Override
+			public void onStopGatherCallback(int status, String message) {
+			}
+
+			// 停止服务回调
+			@Override
+			public void onStopTraceCallback(int status, String message) {
 			}
 		};
 		// 开启服务
@@ -187,20 +245,27 @@ public class FindFragment extends Fragment {
 		historyTrackRequest.setStartTime(startTime);
 		// 设置结束时间
 		historyTrackRequest.setEndTime(endTime);
-
+		historyTrackRequest.setProcessed(true);
+		historyTrackRequest.setProcessOption(new ProcessOption().setNeedDenoise(true)
+				.setTransportMode(TransportMode.walking));
 		// 初始化轨迹监听器
 		OnTrackListener mTrackListener = new OnTrackListener() {
 			// 历史轨迹回调
 			@Override
 			public void onHistoryTrackCallback(HistoryTrackResponse response) {
+				Log.d("responsesize", response.getSize()+" ");
 				List<TrackPoint> tps = response.getTrackPoints();
-				List<Integer> colors = new ArrayList<Integer>();
+				
 				List<LatLng> lls = new ArrayList<LatLng>();
 				Log.d("response", response.message+" "+response.getEntityName());
 				if(tps!=null&&tps.size()>0){
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
 					//标记起点和终点
 					LatLng startNode = new LatLng(response.getStartPoint().getLocation().getLatitude(),
 		        			response.getStartPoint().getLocation().getLongitude());
+					Log.d("startTime", sdf.format(new Date(response.getStartPoint().getLocTime()*1000)));
+					Log.d("endTime", sdf.format(new Date(response.getEndPoint().getLocTime()*1000)));
+					
 					//构建Marker图标  
 			        BitmapDescriptor bitmap = BitmapDescriptorFactory  
 			            .fromResource(R.drawable.start);  
@@ -223,22 +288,34 @@ public class FindFragment extends Fragment {
 			        //在地图上添加Marker，并显示  
 			        baiduMap.addOverlay(option1);
 			        
-			        
+//			        BitmapDescriptor bitm;
+//			        OverlayOptions op;
 					//绘制轨迹
 					for(TrackPoint tp:tps){
 						
 						LatLng ll =new LatLng(tp.getLocation().getLatitude(),tp.getLocation().getLongitude());
 						lls.add(ll);
-						colors.add(Integer.valueOf(Color.RED));
+						Log.d("tp", ll.latitude+"　"+ll.longitude);
+						
+//						bitm = BitmapDescriptorFactory  
+//							    .fromResource(R.drawable.dot);  
+//							//构建MarkerOption，用于在地图上添加Marker  
+//						 op= new MarkerOptions()  
+//							    .position(new LatLng(tp.getLocation().getLatitude(),tp.getLocation().getLongitude()))  
+//							    .icon(bitm);  
+//							//在地图上添加Marker，并显示  
+//							baiduMap.addOverlay(op);
 					}
 					 if(lls.size()<2){
-							Log.d("size2","=="+lls.size());
+							Log.d("size2","=="+tps.size());
 				        	//Toast.makeText(MainActivity.this, "您已经到达目的地！", Toast.LENGTH_LONG).show();
 				        }else{
 				        	OverlayOptions ooPolyline = new PolylineOptions().width(10)
-				        	        .colorsValues(colors).points(lls);
+				        	        .points(lls).color(Color.rgb(18, 150, 219));
+				        	//Log.d("color", Color.RED+" ");
 				        	Log.d("size","=="+lls.size());
 				        	Polyline  mPolyline = (Polyline) baiduMap.addOverlay(ooPolyline);
+//				        	mPolyline.setColor();
 			        	}
 					
 				}
@@ -248,47 +325,6 @@ public class FindFragment extends Fragment {
 
 		// 查询历史轨迹
 		mTraceClient.queryHistoryTrack(historyTrackRequest, mTrackListener);
-	}
-	
-	  /** 
-     * 设置定位参数 
-     */  
-    private void setLocationOption() {  
-        LocationClientOption option = new LocationClientOption();  
-        option.setOpenGps(true); // 打开GPS  
-        option.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);// 设置定位模式  
-        option.setCoorType("bd09ll"); // 返回的定位结果是百度经纬度,默认值gcj02  
-        option.setScanSpan(5000); // 设置发起定位请求的间隔时间为5000ms  
-        option.setIsNeedAddress(true); // 返回的定位结果包含地址信息  
-        option.setNeedDeviceDirect(true); // 返回的定位结果包含手机机头的方向  
-          
-        locationClient.setLocOption(option);  
-    }  
-    
- // 三个状态实现地图生命周期管理  
-    @Override
-	public void onDestroy() {  
-        //退出时销毁定位  
-        locationClient.stop();  
-        baiduMap.setMyLocationEnabled(false);  
-        // TODO Auto-generated method stub  
-        super.onDestroy();  
-        mapView.onDestroy();  
-        mapView = null;  
-    }  
-  
-    @Override
-	public void onResume() {  
-        // TODO Auto-generated method stub  
-        super.onResume();  
-        mapView.onResume();  
-    }  
-  
-    @Override
-	public void onPause() {  
-        // TODO Auto-generated method stub  
-        super.onPause();  
-        mapView.onPause();  
-    }  
+	}  
 	
 }

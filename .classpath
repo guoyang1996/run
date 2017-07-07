@@ -10,5 +10,7 @@
 	<classpathentry kind="lib" path="libs/BaiduTraceSDK_v3_0_4.jar"/>
 	<classpathentry kind="lib" path="libs/bos-android-sdk-1.0.2.jar"/>
 	<classpathentry kind="lib" path="libs/BaiduLBS_Android.jar"/>
+	<classpathentry kind="lib" path="libs/mpchartlib.jar"/>
+	<classpathentry kind="lib" path="libs/nineoldandroids-2.4.0.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

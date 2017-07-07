@@ -119,8 +119,12 @@ public class MyFragment extends Fragment implements OnClickListener {
         rButton2.setOnClickListener(this);
 
         if (MainActivity.myObjectId != null) {
+     
             user = pedometerDB.loadUser(MainActivity.myObjectId);
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+            
+            
+         	 
             if(pedometerDB.loadSteps(MainActivity.myObjectId,sdf.format(new Date()))!=null)
             {
             	 step= pedometerDB.loadSteps(MainActivity.myObjectId,sdf.format(new Date()));

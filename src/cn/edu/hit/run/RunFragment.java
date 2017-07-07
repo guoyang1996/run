@@ -30,9 +30,7 @@ import android.widget.Toast;
 public class RunFragment extends Fragment{
 
 	private View view;
-	//private CircleBar circleBar;
 	private RoundProgressBar roundProgressBar;
-	//private TextView runTextView;
 	private int total_step = 0;
 	private Thread thread;
 	private int Type = 1;
@@ -46,7 +44,6 @@ public class RunFragment extends Fragment{
 	private SimpleDateFormat sdf;
 	private String today;
 	private TextView goalText;
-	//private boolean flag = true;// 来判断第三个页面是否开启动画
 	
 	@SuppressLint("HandlerLeak")
 	//利用Handler来实现UI线程的更新
@@ -125,72 +122,25 @@ public class RunFragment extends Fragment{
 		
 		pedometerDB = PedometerDB.getInstance(getActivity());
 		user = pedometerDB.loadUser(MainActivity.myObjectId);
-		//Log.i("runinit",""+user.getGoal());
-//		Toast.makeText(getActivity(), MainActivity.myObjectId+"--" ,
-//				Toast.LENGTH_LONG).show();
+		
 		if (MainActivity.myObjectId != null) {
 			step_length = user.getStep_length();
 			StepDetector.SENSITIVITY = user.getSensitivity();
 			StepDetector.CURRENT_SETP = user.getToday_step();
 			roundProgressBar.setGoal(user.getGoal());
+			//Log.d("user", user.get);
 		} else {
-			Toast.makeText(getActivity(), "user is null", Toast.LENGTH_SHORT)
-					.show();
+
 		}
 		Intent intent = new Intent(getActivity(), StepService.class);
 		getActivity().startService(intent);
 
-//		mapButton=(ImageButton) view.findViewById(R.id.mapButton);
-//		mapButton.setOnClickListener(this);
-		//sharekey = (ImageView) view.findViewById(R.id.title_pedometer);
-		//ShareSDK.initSDK(getActivity());
-		//sharekey.setOnClickListener(this);
+
 		
 	}
 
-//	@Override
-//	public void onClick(View arg0) {
-//		Intent intent = new Intent(this.getActivity(),com.baidu.trackshow.MainActivity.class);
-//		
-//		startActivity(intent);
-//		Message msg = new Message();
-//		handler.sendMessage(msg);
-//
-//		
-//	}
+
 
 	
-	/*public void onClick(View arg0) {
-		switch (arg0.getId()) {
-		case R.id.title_pedometer:
-			OnekeyShare oks = new OnekeyShare();
-			oks.setNotification(R.drawable.pedometer,
-					"ShareSDK notification content");
-			oks.setText("今天已经走了" + total_step + "步");
-			oks.setSilent(false);
-			oks.disableSSOWhenAuthorize();
-			oks.setDialogMode();
-			// 显示
-			oks.show(getActivity());
-			break;
-		case R.id.progress_pedometer:
-			if (Type == 1) {
-				Type = 2;
-			} else if (Type == 2) {
-				String address = "http://www.weather.com.cn/data/cityinfo"
-						+ "/101010100.html";
-				queryFromServer(address);
-				flag = true;
-				Type = 3;
-			} else if (Type == 3) {
-				Type = 1;
-			}
-			Message msg = new Message();
-			handler.sendMessage(msg);
-			break;
-		default:
-			break;
-		}
-	}
-	}*/
+	
 }

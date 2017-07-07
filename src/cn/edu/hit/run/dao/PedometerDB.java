@@ -69,6 +69,17 @@ public class PedometerDB {
 	}
 
 	/**
+	 * 清空step表
+	 * 
+	 * @param user
+	 */
+	public void deleteAllSteps() {
+		
+			db.delete("step", "Id = ?",
+					new String[] { "%%"});
+		
+	}
+	/**
 	 * 根据user的id删除user表里的数据
 	 * 
 	 * @param user
@@ -275,10 +286,10 @@ public class PedometerDB {
 						.getColumnIndex("today_step")));
 				user.setGoal(cursor.getInt(cursor
 						.getColumnIndex("goal")));
-				Log.i("loadUser", "User is  not null!");
+				//Log.i("loadUser", "User is  not null!");
 			} while (cursor.moveToNext());
 		} else {
-			Log.i("tag", "User is null!");
+			//Log.i("tag", "User is null!");
 		}
 		return user;
 	}
@@ -304,7 +315,7 @@ public class PedometerDB {
 			user.setToday_step(cursor.getInt(cursor
 					.getColumnIndex("today_step")));
 		} else {
-			Log.i("tag", "User is null!");
+			//Log.i("tag", "User is null!");
 		}
 		return user;
 	}
